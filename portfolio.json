@@ -1,0 +1,64 @@
+{
+    "holdings": [
+        {
+            "code": "014320",
+            "name": "德邦半导体产业混合C",
+            "shares": 265.3,
+            "cost_price": 1.9168
+        },
+        {
+            "code": "012734",
+            "name": "易方达人工智能ETF联接C",
+            "shares": 794.08,
+            "cost_price": 1.7261
+        },
+        {
+            "code": "013180",
+            "name": "广发新能源电池ETF联接C",
+            "shares": 1057.09,
+            "cost_price": 0.8767
+        },
+        {
+            "code": "024195",
+            "name": "永赢国证商用卫星通信产业ETF联接C",
+            "shares": 365.11,
+            "cost_price": 1.4768
+        },
+        {
+            "code": "020256",
+            "name": "中欧中证机器人指数C",
+            "shares": 810.39,
+            "cost_price": 1.5848
+        },
+        {
+            "code": "025553",
+            "name": "中银中证机器人指数A",
+            "shares": 481.11,
+            "cost_price": 1.0393
+        },
+        {
+            "code": "012886",
+            "name": "华夏中证光伏产业ETF联接C",
+            "shares": 1108.95,
+            "cost_price": 0.6153
+        },
+        {
+            "code": "025857",
+            "name": "华夏中证电网设备主题ETF联接C",
+            "shares": 462.62,
+            "cost_price": 1.0808
+        },
+        {
+            "code": "024420",
+            "name": "华夏创业板新能源ETF联接C",
+            "shares": 385.73,
+            "cost_price": 1.3183
+        },
+        {
+            "code": "011839",
+            "name": "天弘中证人工智能主题指数A",
+            "shares": 408.67,
+            "cost_price": 1.5613
+        }
+    ]
+}

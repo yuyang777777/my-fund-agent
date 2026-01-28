@@ -1,0 +1,28 @@
+name: Daily Fund Report
+
+on:
+  schedule:
+    # 北京时间每天 00:15 运行 (UTC 16:15)
+    - cron: '15 16 * * *'
+  workflow_dispatch: # 允许手动点击运行进行测试
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: 运行脚本
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        run: python fund_screener.py

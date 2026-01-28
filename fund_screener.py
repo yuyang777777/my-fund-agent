@@ -72,20 +72,54 @@ def calculate_portfolio():
     with open(PORTFOLIO_FILE, 'r', encoding='utf-8') as f:
         data = json.load(f)
     
-    total_val, total_daily_p, lines = 0, 0, []
+    total_val = 0          # 总市值
+    total_daily_p = 0      # 今日总盈亏额
+    total_hold_p = 0       # 累计总盈亏额
+    lines = []
+    
     print(f"\n📊 正在同步持仓净值 (共 {len(data['holdings'])} 只)...")
     for item in data['holdings']:
-        time.sleep(0.5)
+        time.sleep(0.5) # 避免请求过快被封
         try:
+            # 获取基金净值数据
             df = ak.fund_open_fund_info_em(symbol=item['code'], indicator="单位净值走势")
-            nav, prev_nav = float(df.iloc[-1]['单位净值']), float(df.iloc[-2]['单位净值'])
-            rate = (nav - prev_nav) / prev_nav
-            val = nav * item['shares']
-            total_val += val; total_daily_p += (val * (rate / (1 + rate)))
-            lines.append(f"- {item['name']}({item['code']}): 持有收益率 {((nav-item['cost_price'])/item['cost_price']*100):+.2f}%")
-        except: continue
-    report_text = f"总资产: {total_val:.2f} | 今日预估盈亏: {total_daily_p:+.2f}\n" + "\n".join(lines)
-    return report_text
+            nav = float(df.iloc[-1]['单位净值'])      # 最新净值
+            prev_nav = float(df.iloc[-2]['单位净值']) # 前一交易日净值
+            
+            # 1. 计算今日单只收益
+            daily_rate = (nav - prev_nav) / prev_nav
+            current_val = nav * item['shares']
+            daily_profit = current_val * (daily_rate / (1 + daily_rate))
+            
+            # 2. 计算累计持有收益
+            hold_profit = (nav - item['cost_price']) * item['shares']
+            hold_rate = (nav - item['cost_price']) / item['cost_price'] * 100
+            
+            # 累加总计
+            total_val += current_val
+            total_daily_p += daily_profit
+            total_hold_p += hold_profit
+            
+            # 格式化单只基金详情
+            lines.append(
+                f"- {item['name']}({item['code']}): "
+                f"今日 {daily_profit:+.2f}元 | "
+                f"持有 {hold_profit:+.2f}元({hold_rate:+.2f}%)"
+            )
+        except Exception as e:
+            print(f"⚠️ 无法获取 {item['code']} 数据: {e}")
+            continue
+            
+    # 构造汇总报告
+    summary = (
+        f"💰 【资产汇总】\n"
+        f"总市值: {total_val:.2f} 元\n"
+        f"今日预估盈亏: {total_daily_p:+.2f} 元\n"
+        f"累计持有盈亏: {total_hold_p:+.2f} 元\n"
+        f"--------------------------\n"
+        f"📈 【持仓明细】\n"
+    )
+    return summary + "\n".join(lines)
 
 # --- 3. Gemini API 调用 (增强联网与重试) ---
 def ask_gemini(prompt):

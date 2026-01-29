@@ -7,12 +7,11 @@ import os
 import time
 import socket
 import requests # 新增：用于微信推送
-import google.genai as genai_sdk
-from google.genai import types
+from openai import OpenAI
 
 # ================= 配置区域 =================
 # 从环境变量读取 Key，保护隐私安全
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY")
 PUSHPLUS_TOKEN = os.environ.get("PUSHPLUS_TOKEN")
 
 PORTFOLIO_FILE = 'portfolio.json'
@@ -20,12 +19,9 @@ TARGET_COUNT = 5
 START_1Y_RETURN = 8.0     
 START_MAX_DD = 20.0       
 
-if not GEMINI_API_KEY:
-    print("❌ 错误：未发现 GEMINI_API_KEY。如果是本地测试，请执行 export GEMINI_API_KEY='你的Key'")
 # ============================================
 
 # 初始化 Gemini 客户端
-client = genai_sdk.Client(api_key=GEMINI_API_KEY)
 
 # --- 1. 量化筛选模块 ---
 def calculate_indicators(df_history):
@@ -122,26 +118,32 @@ def calculate_portfolio():
     return summary + "\n".join(lines)
 
 # --- 3. Gemini API 调用 (增强联网与重试) ---
-def ask_gemini(prompt):
-    print("\n🤖 正在请求 Gemini 2.0 进行联网深度分析...")
-    max_retries = 3
-    for i in range(max_retries):
+def ask_ai(prompt):
+    print("\n🤖 正在请求 DeepSeek-V3 进行深度分析...")
+    if not DEEPSEEK_API_KEY:
+        return "❌ 错误：未配置 DEEPSEEK_API_KEY"
+
+    # DeepSeek 兼容 OpenAI SDK 格式
+    client_ds = OpenAI(
+        api_key=DEEPSEEK_API_KEY, 
+        base_url="https://api.deepseek.com"
+    )
+
+    for i in range(3): # 简单重试 3 次
         try:
-            response = client.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    tools=[types.Tool(google_search=types.GoogleSearch())]
-                )
+            response = client_ds.chat.completions.create(
+                model="deepseek-chat", # 对应最新的 DeepSeek-V3
+                messages=[
+                    {"role": "system", "content": "你是一位专业的量化投资专家，请基于数据给出冷静、客观的诊断。"},
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=1024
             )
-            return response.text
+            return response.choices[0].message.content
         except Exception as e:
-            if "429" in str(e) or "54" in str(e):
-                print(f"⚠️ 触发限制或网络波动，休眠 60 秒后重试 ({i+1}/{max_retries})...")
-                time.sleep(60)
-            else:
-                return f"AI 诊断失败: {e}"
-    return "❌ 达到最大尝试次数，AI 分析未生成。"
+            print(f"⚠️ 第 {i+1} 次尝试失败: {e}")
+            time.sleep(5)
+    return "❌ DeepSeek 调用失败，请检查 API 余额或网络。"
 
 # --- 4. 微信推送模块 ---
 def push_to_wechat(content):
@@ -171,7 +173,7 @@ if __name__ == "__main__":
     prompt = f"你是一位顶级的量化投资专家。请结合【今日实时市场新闻】和以下数据分析：\n\n【我的持仓】\n{portfolio_report}\n\n【潜力基金】\n{recommends_str}\n\n要求分析今日盈亏原因、给出调仓建议和明日指引。"
 
     # 步骤 4: 获取 AI 结果
-    ai_advice = ask_gemini(prompt)
+    ai_advice = ask_ai(prompt)
     
     # 步骤 5: 汇总结果
     final_report = f"### 1. 持仓概况\n{portfolio_report}\n\n### 2. 量化优选\n{recommends_str}\n\n### 3. AI 投资建议\n{ai_advice}"

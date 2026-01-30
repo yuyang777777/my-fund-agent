@@ -1,7 +1,6 @@
 name: Daily Fund Report
 
 on:
-  on:
   schedule:
     # 23:45 触发（北京时间），对应 UTC 是 15:45
     - cron: '45 15 * * *'

@@ -49,20 +49,20 @@ def calculate_portfolio():
     return summary + "\n".join(lines), total_daily_p
 
 def get_fund_recommends():
-    print("🔎 正在筛选全市场涨幅排行...")
     try:
-        # 使用排行插件，在零点运行更稳定
+        # 这个插件在凌晨数据最全
         df = ak.fund_open_fund_rank_em(symbol="全部")
         df = df[df['基金类型'].str.contains('股票型|混合型|指数型', na=False)]
         df['日增长率'] = pd.to_numeric(df['日增长率'], errors='coerce')
+        # 取涨幅前 5
         top_funds = df.nlargest(5, '日增长率')
         
-        res = ["📈 【量化优选参考】"]
+        res = ["📈 【今日市场领涨参考】"]
         for _, row in top_funds.iterrows():
-            res.append(f"- {row['基金简称']}({row['基金代码']}): 今日涨幅 {row['日增长率']}%")
+            res.append(f"- {row['基金简称']}({row['基金代码']}): 涨幅 {row['日增长率']}%")
         return "\n".join(res)
     except:
-        return "⚠️ 暂未获取到量化数据"
+        return "⚠️ 正在等待数据中心更新..."
 
 def ask_ai(prompt):
     # DeepSeek 稳定性远超 Gemini 免费版

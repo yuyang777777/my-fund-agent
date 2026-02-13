@@ -93,10 +93,17 @@ def push_to_wechat(content):
 
 if __name__ == "__main__":
     now = datetime.datetime.now()
-    # 1. 周末不运行 (5=周六, 6=周日)
-    if now.weekday() >= 5:
-        print("📅 周末休市，脚本自动休眠。")
+    weekday = now.weekday() # 0=周一, 1=周二, ..., 5=周六, 6=周日
+
+    # 1. 修正后的时间差逻辑：周日和周一不推送
+    # 因为周日零点和周一零点抓取的是周六日的数据，没有更新
+    if weekday == 0 or weekday == 6:
+        print(f"📅 今天是周{['一','日'][0 if weekday==0 else 1]}，昨夜无交易，脚本休息。")
         exit()
+
+    print(f"🚀 正在分析交易日（北京时间 {now.strftime('%Y-%m-%d')}）的数据...")
+    
+    # ... 后续逻辑保持不变 ...
 
     # 2. 执行核算
     report_text, daily_p = calculate_portfolio()

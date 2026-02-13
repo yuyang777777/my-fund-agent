@@ -3,62 +3,62 @@
         {
             "code": "014320",
             "name": "德邦半导体产业混合C",
-            "shares": 265.3,
-            "cost_price": 1.9168
+            "shares": 308.34,
+            "cost_price": 1.9493
         },
         {
             "code": "012734",
             "name": "易方达人工智能ETF联接C",
-            "shares": 794.08,
-            "cost_price": 1.7261
+            "shares": 964.06,
+            "cost_price": 1.7434
         },
         {
             "code": "013180",
             "name": "广发新能源电池ETF联接C",
-            "shares": 1057.09,
-            "cost_price": 0.8767
+            "shares": 1088.31,
+            "cost_price": 0.8656
         },
         {
             "code": "024195",
             "name": "永赢国证商用卫星通信产业ETF联接C",
-            "shares": 365.11,
-            "cost_price": 1.4768
+            "shares": 320.23,
+            "cost_price": 1.5127
         },
         {
             "code": "020256",
             "name": "中欧中证机器人指数C",
-            "shares": 810.39,
-            "cost_price": 1.5848
-        },
-        {
-            "code": "025553",
-            "name": "中银中证机器人指数A",
-            "shares": 481.11,
-            "cost_price": 1.0393
+            "shares": 1135.47,
+            "cost_price": 1.5913
         },
         {
             "code": "012886",
             "name": "华夏中证光伏产业ETF联接C",
-            "shares": 1108.95,
-            "cost_price": 0.6153
+            "shares": 1420.49,
+            "cost_price": 0.6317
         },
         {
             "code": "025857",
             "name": "华夏中证电网设备主题ETF联接C",
-            "shares": 462.62,
-            "cost_price": 1.0808
+            "shares": 689.55,
+            "cost_price": 1.1432
         },
         {
-            "code": "024420",
-            "name": "华夏创业板新能源ETF联接C",
-            "shares": 385.73,
-            "cost_price": 1.3183
+            "code": "017140",
+            "name": "华宝中证有色金属ETF联接A",
+            "shares": 476.89,
+            "cost_price": 2.0034
         },
         {
-            "code": "011839",
-            "name": "天弘中证人工智能主题指数A",
-            "shares": 408.67,
-            "cost_price": 1.5613
+            "code": "012737",
+            "name": "广发创新药产业ETF联接A",
+            "shares": 1748.49,
+            "cost_price": 0.5879
+        },
+        {
+            "code": "017610",
+            "name": "华夏恒生港股通中国内地企业高股息率ETF联接A",
+            "shares": 448.18,
+            "cost_price": 1.4444
         }
     ]
 }

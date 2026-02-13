@@ -161,25 +161,46 @@ def push_to_wechat(content):
     requests.post(url, json=data)
 
 # --- 主程序 ---
+
+# ... 前面的函数定义保持不变 ...
+
 if __name__ == "__main__":
-    # 步骤 1: 核算我的资产
+    # 1. 自动判定休市：周六和周日不工作
+    # weekday() 返回 0-6，5 是周六，6 是周日
+    now = datetime.datetime.now()
+    if now.weekday() >= 5:
+        print(f"📅 今天是星期{now.weekday()+1}（周末），市场不开启，助手补觉中... 💤")
+        exit()
+
+    print("🚀 交易日到达，开始量化诊断...")
+
+    # 2. 执行持仓核算
     portfolio_report = calculate_portfolio()
     
-    # 步骤 2: 寻找机会
-    recommends = run_quant_screening()
-    recommends_str = "\n".join([f"- {r['Name']}({r['Code']}): 收益{r['Return']}%, 夏普{r['Sharpe']}" for r in recommends])
+    # 3. 再次检查数据有效性
+    # 如果总资产为 0 或者今日盈亏完全没变动，可能是节假日或数据源未更新
+    if "今日预估盈亏: +0.00" in portfolio_report:
+        print("⏸️ 检测到今日盈亏无波动，可能是法定节假日，跳过今日推送。")
+        exit()
 
-    # 步骤 3: 构造 Prompt
-    prompt = f"你是一位顶级的量化投资专家。请结合【今日实时市场新闻】和以下数据分析：\n\n【我的持仓】\n{portfolio_report}\n\n【潜力基金】\n{recommends_str}\n\n要求分析今日盈亏原因、给出调仓建议和明日指引。"
+    # 4. 获取量化优选建议
+    recommends_str = get_fund_recommends()
 
-    # 步骤 4: 获取 AI 结果
-    ai_advice = ask_ai(prompt)
+    # 5. 组合 Prompt 并调用 AI (此处确保你已将函数名改为 ask_ai)
+    prompt = f"""
+    你是资深基金经理，请基于以下数据给出简明扼要的分析（300字以内）：
     
-    # 步骤 5: 汇总结果
-    final_report = f"### 1. 持仓概况\n{portfolio_report}\n\n### 2. 量化优选\n{recommends_str}\n\n### 3. AI 投资建议\n{ai_advice}"
+    【我的持仓】
+    {portfolio_report}
     
-    # 打印到控制台
-    print("\n" + "="*50 + "\n" + final_report + "\n" + "="*50)
+    【市场优选参考】
+    {recommends_str}
     
-    # 自动发送微信
+    请重点告知：哪些持仓需要止盈/止损？目前行情适合加仓哪类板块？
+    """
+    
+    ai_advice = ask_ai(prompt) # 确保你已经把之前的 ask_gemini 改成了支持 DeepSeek/Grok 的 ask_ai
+
+    # 6. 最终汇总并推送到微信
+    final_report = f"📅 基金日报 {now.strftime('%Y-%m-%d')}\n\n{portfolio_report}\n\n### 💡 AI 投资建议\n{ai_advice}"
     push_to_wechat(final_report)

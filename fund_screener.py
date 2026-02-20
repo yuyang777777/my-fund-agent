@@ -85,19 +85,29 @@ def push_to_wechat(content):
 
 if __name__ == "__main__":
     now = datetime.datetime.now()
-    weekday = now.weekday() 
     
-    # 核心逻辑：周日(6)和周一(0)的零点不推送（因为对应周六日的休市数据）
-    if weekday == 0 or weekday == 6:
-        print("📅 昨夜市场休市，脚本跳过执行。")
+    # 1. 基础过滤：周日和周一零点不发 (逻辑同前)
+    if now.weekday() == 0 or now.weekday() == 6:
+        print("📅 昨夜市场休市，脚本休息。")
         exit()
 
-    report_text, daily_p = calculate_portfolio()
-    
-    # 如果今日盈亏为0且不是因为你没买，那说明是节假日没更新
-    if abs(daily_p) < 0.01:
-        print("⏸️ 净值未更新（可能是法定节假日），跳过推送。")
-        exit()
+    # 2. 核心补丁：检查今天是否为 A 股交易日
+    try:
+        # 获取最新的交易日历
+        trade_conf = ak.tool_trade_date_hist_sinajs()
+        trade_days = trade_conf['trade_date'].astype(str).tolist()
+        
+        # 判定“昨天”（即零点运行所对应的报告日）是否在交易日列表里
+        # 注意：零点运行算的是前一天的数据，所以减去 1 天
+        report_date = (now - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+        
+        if report_date not in trade_days:
+            print(f"🏮 判定 {report_date} 为法定节假日或休市日，春节快乐，不推送报告。")
+            exit()
+    except Exception as e:
+        print(f"⚠️ 日历检查失败，尝试跳过: {e}")
+
+    # ... 后续逻辑 (calculate_portfolio 等) ...
 
     recommends = get_fund_recommends()
     prompt = f"请分析持仓并对比市场表现：\n\n{report_text}\n\n{recommends}"

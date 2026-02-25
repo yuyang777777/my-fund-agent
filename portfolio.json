@@ -3,8 +3,8 @@
         {
             "code": "014320",
             "name": "德邦半导体产业混合C",
-            "shares": 308.34,
-            "cost_price": 1.9493
+            "shares": 321.81,
+            "cost_price": 1.9609
         },
         {
             "code": "012734",
@@ -21,8 +21,8 @@
         {
             "code": "024195",
             "name": "永赢国证商用卫星通信产业ETF联接C",
-            "shares": 320.23,
-            "cost_price": 1.5127
+            "shares": 368.62,
+            "cost_price": 1.5311
         },
         {
             "code": "020256",
@@ -33,8 +33,8 @@
         {
             "code": "012886",
             "name": "华夏中证光伏产业ETF联接C",
-            "shares": 1420.49,
-            "cost_price": 0.6317
+            "shares": 1521.34,
+            "cost_price": 0.6358
         },
         {
             "code": "025857",
@@ -45,20 +45,20 @@
         {
             "code": "017140",
             "name": "华宝中证有色金属ETF联接A",
-            "shares": 476.89,
-            "cost_price": 2.0034
+            "shares": 534.96,
+            "cost_price": 1.9953
         },
         {
             "code": "012737",
             "name": "广发创新药产业ETF联接A",
-            "shares": 1748.49,
+            "shares": 1918.50,
             "cost_price": 0.5879
         },
         {
             "code": "017610",
             "name": "华夏恒生港股通中国内地企业高股息率ETF联接A",
-            "shares": 448.18,
-            "cost_price": 1.4444
+            "shares": 548.74,
+            "cost_price": 1.4530
         }
     ]
 }

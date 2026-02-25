@@ -85,33 +85,31 @@ def push_to_wechat(content):
 
 if __name__ == "__main__":
     now = datetime.datetime.now()
+    weekday = now.weekday() 
     
-    # 1. 基础过滤：周日和周一零点不发 (逻辑同前)
-    if now.weekday() == 0 or now.weekday() == 6:
-        print("📅 昨夜市场休市，脚本休息。")
+    # 1. 基础过滤：周日(6)和周一(0)的零点不发
+    if weekday == 0 or weekday == 6:
+        print("📅 昨夜市场休市，脚本跳过执行。")
         exit()
 
-    # 2. 核心补丁：检查今天是否为 A 股交易日
+    # 2. 执行核算
     try:
-        # 获取最新的交易日历
-        trade_conf = ak.tool_trade_date_hist_sinajs()
-        trade_days = trade_conf['trade_date'].astype(str).tolist()
-        
-        # 判定“昨天”（即零点运行所对应的报告日）是否在交易日列表里
-        # 注意：零点运行算的是前一天的数据，所以减去 1 天
-        report_date = (now - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-        
-        if report_date not in trade_days:
-            print(f"🏮 判定 {report_date} 为法定节假日或休市日，春节快乐，不推送报告。")
-            exit()
+        report_text, daily_p = calculate_portfolio()
     except Exception as e:
-        print(f"⚠️ 日历检查失败，尝试跳过: {e}")
+        print(f"❌ 核算失败: {e}")
+        exit()
+    
+    # 3. 核心补丁：节假日判定 (如果今日盈亏绝对值小于 0.01)
+    # 在春节等法定节假日，净值不更新，daily_p 必然为 0
+    if abs(daily_p) < 0.01:
+        print(f"🏮 检测到今日盈亏为 0，判定为法定节假日（如春节）或数据未更新，停止推送。")
+        exit()
 
-    # ... 后续逻辑 (calculate_portfolio 等) ...
-
+    # 4. 获取推荐并调用 AI
     recommends = get_fund_recommends()
     prompt = f"请分析持仓并对比市场表现：\n\n{report_text}\n\n{recommends}"
     ai_advice = ask_ai(prompt)
 
+    # 5. 推送
     push_to_wechat(f"{report_text}\n\n{recommends}\n\n### 🤖 AI 建议\n{ai_advice}")
-    print("✅ 报告已发送！")
+    print("✅ 任务完成，报告已发出。")

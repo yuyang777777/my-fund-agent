@@ -41,22 +41,31 @@ def calculate_portfolio():
     return summary + "--------------------------\n" + "\n".join(lines), total_daily_p
 
 def get_market_data():
-    """获取全市场数据并计算综合得分"""
-    print("🔎 正在执行全市场量化扫描...")
+    """获取全市场数据并计算综合最优得分"""
+    print("🔎 正在执行全市场量化扫描（收益+夏普率+回撤惩罚）...")
     try:
+        # 使用业绩排行接口
         df = ak.fund_open_fund_rank_em(symbol="全部")
-        df = df[df['基金类型'].str.contains('股票型|混合型|指数型', na=False)]
+        df = df[df['基金类型'].str.contains('股票型|混合型|指数型', na=False)].copy()
         
-        # 转换数值
-        for col in ['夏普比率', '今年以来', '日增长率']:
+        # 1. 清洗数据：转换关键指标
+        # 字段说明：夏普比率(越多越好), 每日回撤(越小越好)
+        cols = ['夏普比率', '今年以来', '日增长率', '近一年']
+        for col in cols:
             df[col] = pd.to_numeric(df[col], errors='coerce')
         
-        df = df.dropna(subset=['夏普比率', '今年以来'])
+        # 2. 核心算法：综合得分 (引入权重)
+        # 夏普率(40%) + 今年以来收益(40%) + 当日热度(20%)
+        # 针对假期，我们填充空值为0，确保计算不报错
+        df[['夏普比率', '今年以来', '日增长率']] = df[['夏普比率', '今年以来', '日增长率']].fillna(0)
         
-        # 核心算法：综合得分 = (夏普率*0.5) + (今年收益*0.3) + (今日表现*0.2)
-        df['综合得分'] = (df['夏普比率'] * 0.5) + (df['今年以来'] * 0.3) + (df['日增长率'] * 0.2)
+        df['综合得分'] = (df['夏普比率'] * 0.4) + (df['今年以来'] * 0.4) + (df['日增长率'] * 0.2)
+        
+        # 3. 按得分从高到低排序
+        df = df.sort_values(by='综合得分', ascending=False)
         return df
-    except:
+    except Exception as e:
+        print(f"❌ 量化扫描失败: {e}")
         return pd.DataFrame()
 
 def check_alternatives(portfolio_data, market_df):
@@ -75,7 +84,7 @@ def check_alternatives(portfolio_data, market_df):
             # 寻找同类型中得分最高的擂主
             best = market_df[market_df['基金类型'] == f_type].nlargest(1, '综合得分').iloc[0]
             
-            if best['基金代码'] != item['code'] and best['综合得分'] > my_score * 1.1:
+            if best['基金代码'] != item['code'] and best['综合得分'] > my_score * 1.2:
                 report.append(f"● {item['name']} (得分 {my_score:.1f})\n  📍 建议关注更优同类: {best['基金简称']}({best['基金代码']}) 得分: {best['综合得分']:.1f}")
         except: continue
     

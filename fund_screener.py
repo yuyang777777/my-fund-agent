@@ -61,48 +61,30 @@ def calculate_portfolio():
 
 
 def get_market_data():
-    """获取全市场量化数据，自动适配 akshare 实际列名"""
+    """获取全市场量化数据（基于 akshare 实际列名）"""
     print("🔎 正在执行全量化扫描...")
     try:
         df = ak.fund_open_fund_rank_em(symbol="全部")
+        # 实际列名：序号/基金代码/基金简称/日期/单位净值/累计净值/日增长率/
+        #           近1周/近1月/近3月/近6月/近1年/近2年/近3年/今年来/成立来/自定义/手续费
 
-        # 打印真实列名，方便 Actions 日志排查
-        print(f"📋 akshare 实际返回列名：{df.columns.tolist()}")
-
-        # 筛选权益类基金
-        if '基金类型' not in df.columns:
-            print("❌ 找不到'基金类型'列，请查看上方日志确认真实列名")
-            return pd.DataFrame()
-
-        df = df[df['基金类型'].str.contains('股票型|混合型|指数型', na=False)].copy()
-
-        # 将非标识列统一转为数值
-        id_cols = {'基金代码', '基金简称', '基金类型'}
+        # 非标识列统一转为数值
+        id_cols = {'基金代码', '基金简称', '日期'}
         for col in df.columns:
             if col not in id_cols:
                 df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
-        # 动态定位"今年以来"列
-        score_col = next(
-            (c for c in ['今年以来', '今年来', '年初至今'] if c in df.columns), None
+        # 综合得分：今年来40% + 近1年30% + 近3年20% + 日增长率10%
+        df['综合得分'] = (
+            df['今年来']   * 0.4 +
+            df['近1年']    * 0.3 +
+            df['近3年']    * 0.2 +
+            df['日增长率'] * 0.1
         )
-        if score_col is None:
-            print(f"❌ 找不到收益列，当前全部列名：{df.columns.tolist()}")
-            return pd.DataFrame()
-
-        # 动态定位近1年、近3年列（可选，缺失时忽略）
-        year1_col = next((c for c in ['近1年', '近一年', '1年'] if c in df.columns), None)
-        year3_col = next((c for c in ['近3年', '近三年', '3年'] if c in df.columns), None)
-
-        df['综合得分'] = df[score_col] * 0.5
-        if year1_col:
-            df['综合得分'] += df[year1_col] * 0.3
-        if year3_col:
-            df['综合得分'] += df[year3_col] * 0.2
 
         df['基金代码'] = df['基金代码'].astype(str).str.zfill(6)
 
-        result = df.sort_values(by='综合得分', ascending=False)
+        result = df.sort_values(by='综合得分', ascending=False).reset_index(drop=True)
         print(f"✅ 量化扫描完成，共 {len(result)} 支基金入榜")
         return result
 
@@ -114,7 +96,7 @@ def get_market_data():
 
 
 def check_alternatives(market_df):
-    """逐只持仓与同类最强基金进行 1对1 PK"""
+    """逐只持仓与全市场最强基金进行 PK，显示排名和得分差距"""
     print("🔄 正在执行同类择优监控...")
     if market_df.empty:
         return "⚠️ 暂时无法获取PK对比数据"
@@ -123,29 +105,23 @@ def check_alternatives(market_df):
         with open(PORTFOLIO_FILE, 'r', encoding='utf-8') as f:
             data = json.load(f)
 
-        pk_lines = ["🔄 【同类择优监控】"]
+        total = len(market_df)
+        pk_lines = ["🔄 【持仓排名监控】"]
         for item in data['holdings']:
             code = str(item['code']).zfill(6)
             my_fund = market_df[market_df['基金代码'] == code]
 
             if not my_fund.empty:
-                my_row = my_fund.iloc[0]
-                f_type = my_row['基金类型']
-                my_score = my_row['综合得分']
-                same_type = market_df[market_df['基金类型'] == f_type]
-                if same_type.empty:
-                    continue
-                best = same_type.iloc[0]
-                if best['基金代码'] != code:
-                    pk_lines.append(
-                        f"● {item['name']}(得分:{my_score:.1f}) "
-                        f"→ 同类最强:{best['基金简称']}(得分:{best['综合得分']:.1f})"
-                    )
-                else:
-                    pk_lines.append(f"● {item['name']}: ✅ 同类排名第一")
+                rank = my_fund.index[0] + 1  # reset_index 后 index 即排名
+                my_score = my_fund.iloc[0]['综合得分']
+                top1 = market_df.iloc[0]
+                percentile = round(rank / total * 100, 1)
+                pk_lines.append(
+                    f"● {item['name']}: 全市场排名 {rank}/{total}（前{percentile}%）"
+                    f" | 得分 {my_score:.1f} vs 榜首 {top1['基金简称']} {top1['综合得分']:.1f}"
+                )
             else:
-                pk_lines.append(f"● {item['name']}({code}): ⚠️ 未在排行榜中找到")
-                print(f"  未匹配代码：{code}，榜单样例：{market_df['基金代码'].head(5).tolist()}")
+                pk_lines.append(f"● {item['name']}({code}): ⚠️ 未在排行榜中找到（可能为货币/债券基金）")
 
         return "\n".join(pk_lines)
 
